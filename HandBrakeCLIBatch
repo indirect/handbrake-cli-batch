@@ -48,12 +48,12 @@ files.each do |file|
 
   cmd = ["HandBrakeCLI"]
   cmd << "-v" if options[:verbose]
-  cmd << %{-i "#{file}"}
-  cmd << %{-o "#{dest_file}"}
-  cmd << %{--preset "#{options[:preset]}"}
+  cmd << '-i' << file
+  cmd << '-o' << dest_file
+  cmd << '--preset' << options[:preset]
 
-  puts cmd.join(" ")
-  system cmd.join(" ")
+  puts cmd.map {|arg| arg =~ /\s/ ? %{"#{arg}"} : arg }.join(" ")
+  system *cmd
 end
 
 puts "Done!"
