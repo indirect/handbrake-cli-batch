@@ -1,26 +1,40 @@
 #!/usr/bin/env ruby
 
-if (ARGV & %w(-h --help)).any?
-  puts "Usage: HandBrakeCLIBatch [preset OR source dir] [dest dir]"
-  puts "Source and dest both default to ."
-  exit
+require 'optparse'
+
+options = {
+  :verbose => false,
+  :preset => "High Profile"
+}
+OptionParser.new do |opt|
+  opt.banner = "Usage: HandBrakeCLIBatch [-v | -p preset] [source] [destination]"
+
+  opt.on("-v", "--verbose", "Run HandBrake in verbose mode (default: false)") do |v|
+    options[:verbose] = v
+  end
+
+  opt.on("-p", "--preset PRESET", "Set the HandBrake preset by name (default: High Profile)") do |p|
+    options[:preset] = p
+  end
+
+  opt.parse!
 end
 
-quality = ARGV[0] || "High Profile"
-if ARGV[0] && File.exist?(ARGV[0])
-  movies_dir = ARGV[0]
-else
-  movies_dir = Dir.pwd
-end
-dest_dir   = ARGV[1] || movies_dir
+movies_dir = ARGV[0] || Dir.pwd
+abort "Source directory '#{movies_dir}' does not exist!" unless File.exist?(movies_dir)
+dest_dir = ARGV[1] || movies_dir
+abort "Destination directory '#{dest_dir}' does not exist!" unless File.exist?(dest_dir)
 
 puts "Converting from"
 puts "  #{movies_dir} to"
 puts "  #{dest_dir}"
-puts "  with preset '#{quality}'"
+puts "  with preset '#{options[:preset]}'"
 
 movies_glob = File.join(movies_dir, "**/*.{avi,mkv}")
-Dir[movies_glob].each do |file|
+files = Dir[movies_glob]
+abort("No files to convert!") if files.empty?
+
+files.each do |file|
   dest_dir  = File.dirname(file)
   new_file  = File.basename(file, File.extname(file)) + ".m4v"
   dest_file = File.join(dest_dir, new_file)
@@ -32,11 +46,14 @@ Dir[movies_glob].each do |file|
     puts "Converting #{File.basename(dest_file)}"
   end
 
+  cmd = ["HandBrakeCLI"]
+  cmd << "-v" if options[:verbose]
+  cmd << %{-i "#{file}"}
+  cmd << %{-o "#{dest_file}"}
+  cmd << %{--preset "#{options[:preset]}"}
 
-  cmd = %{HandBrakeCLI -v -i "#{file}" -o "#{dest_file}" --preset "#{quality}"}
-  if ENV['DEBUG']
-    puts cmd
-    exit
-  end
-  system(cmd)
+  puts cmd.join(" ")
+  system cmd.join(" ")
 end
+
+puts "Done!"
