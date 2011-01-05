@@ -1,6 +1,6 @@
 # HandBrakeCLIBatch
 
-A script that will run HandBrakeCLI recursively against a directory you specify, converting all .avi and .mkv files. Defaults to using the "High Profile" preset.
+A script that will run HandBrakeCLI recursively against a directory you specify, converting all .avi & .mkv files as well as .dvdmedia ([RipIt](http://thelittleappfactory.com/ripit/) DVD rips). Defaults to using the "High Profile" preset.
 
 ## Requirements
 
