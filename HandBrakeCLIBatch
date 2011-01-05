@@ -30,7 +30,7 @@ puts "  #{movies_dir} to"
 puts "  #{dest_dir}"
 puts "  with preset '#{options[:preset]}'"
 
-movies_glob = File.join(movies_dir, "**/*.{avi,mkv}")
+movies_glob = File.join(movies_dir, "**/*.{avi,mkv,dvdmedia}")
 files = Dir[movies_glob]
 abort("No files to convert!") if files.empty?
 
