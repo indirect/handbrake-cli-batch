@@ -8,7 +8,9 @@ options = {
 }
 
 OptionParser.new do |opt|
-  opt.banner = "Usage: HandBrakeCLIBatch [-v | -p preset] [source] [destination]"
+  opt.banner = "Usage: HandBrakeCLIBatch [sourcedir] [destination] \n" \
+  "       HandBrakeCLIBatch SOURCEFILE [sourcefile ...] [destination] \n" \
+  "Options: "
 
   opt.on("-v", "--verbose", "Run HandBrake in verbose mode (default: false)") do |v|
     options[:verbose] = v
@@ -21,20 +23,47 @@ OptionParser.new do |opt|
   opt.parse!
 end
 
-movies_dir = ARGV[0] || Dir.pwd
-abort "Source directory '#{movies_dir}' does not exist!" unless File.exist?(movies_dir)
-dest_dir = ARGV[1] || movies_dir
+args = ARGV.dup
+
+# Without args, use the current directory as an implicit source directory
+if args.empty?
+  movies_dir = Dir.pwd
+else # Try treating the first argument as a source dir if it's a directory
+  movies_dir = File.expand_path(args.shift) if args.first && File.directory?(args.first)
+end
+
+# If we have a directory source
+if movies_dir
+  # Search for avi and mkv files in the directory
+  movies_glob = File.join(movies_dir, "**/*.{avi,mkv,dvdmedia}")
+  files = Dir[movies_glob]
+  puts "Converting files matching pattern\n  #{movies_glob}"
+  puts
+  abort "No files to convert!" if files.empty?
+end
+
+# If the last argument left is a directory, it's the destination
+if args.last && File.directory?(args.last)
+  dest_dir = File.expand_path(args.pop)
+else # Default to the source dir or the current directory
+  dest_dir = movies_dir || Dir.pwd
+end
 abort "Destination directory '#{dest_dir}' does not exist!" unless File.exist?(dest_dir)
 
-puts "Converting from"
-puts "  #{movies_dir} to"
+# With a dest dir but no source dir, treat remaining args as source files
+files ||= args
+files.each do |path|
+  abort "Source file '#{path}' does not exist!" unless File.exist?(path)
+end
+
+# Explain what we're about to do
+files_count = "#{files.size} file#{'s' unless files.size == 1}"
+puts "Converting #{files_count} into"
 puts "  #{dest_dir}"
 puts "  with preset '#{options[:preset]}'"
+puts
 
-movies_glob = File.join(movies_dir, "**/*.{avi,mkv,dvdmedia}")
-files = Dir[movies_glob]
-abort("No files to convert!") if files.empty?
-
+# Convert each file
 files.each do |file|
   new_file  = File.basename(file, File.extname(file)) + ".m4v"
   dest_file = File.join(dest_dir, new_file)
