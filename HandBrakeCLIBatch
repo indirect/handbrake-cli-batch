@@ -1,11 +1,12 @@
 #!/usr/bin/env ruby
-
 require 'optparse'
 
+# Default options
 options = {
   :verbose => false,
   :preset => "High Profile"
 }
+
 OptionParser.new do |opt|
   opt.banner = "Usage: HandBrakeCLIBatch [-v | -p preset] [source] [destination]"
 
@@ -35,7 +36,6 @@ files = Dir[movies_glob]
 abort("No files to convert!") if files.empty?
 
 files.each do |file|
-  dest_dir  = File.dirname(file)
   new_file  = File.basename(file, File.extname(file)) + ".m4v"
   dest_file = File.join(dest_dir, new_file)
 
